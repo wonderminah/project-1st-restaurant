@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 회원정보 처리 SQL -->
+<mapper namespace="restaurant.dao.RestaurantMapper">
+	<!-- 점포목록 출력 -->
+	<select id="getStoreList" parameterType="int" resultType="restaurant">
+		<!-- select * from restaurant -->
+		<!-- where foodtype = #{foodtype} -->
+		
+		select rv.storename, rst.openhour, rst.closehour, rst.phonenum, rst.minorder, rst.requiredtime, rv.grade, rv.reviewnum
+		from restaurant rst, (select storename, avg(grade) as grade, count(id) as reviewnum from review group by storename) rv
+		where rst.storename(+) LIKE rv.storename
+			  and
+			  rst.foodtype = #{value}
+		
+	</select>
+	
+	<!-- 음식메뉴 출력 -->
+	<select id="getMenuList" parameterType="String" resultType="menu">
+		select * from menu
+		where storename like '%' || #{value} || '%'
+	</select>
+	
+	
+	
+	<!-- 장바구니 출력 -->
+	<select id="bringshoppingbag" resultType="shoppingbag">
+		select * from shoppingbag
+	</select>
+		
+	<!-- 장바구니 등록 -->
+	<insert id="addtoshoppingbag" parameterType="shoppingbag">
+		insert into shoppingbag (sbid, storename, menuname, price, amount)
+		values(sb_seq.nextval, #{storename}, #{menuname}, #{price}, #{amount})
+	</insert>
+	
+	<!-- 장바구니 삭제 -->
+	<insert id="cancelorder" parameterType="int">
+		delete from shoppingbag
+		where sbid = #{value}
+	</insert>
+
+
+	
+	<!-- 단골점포 출력 -->
+	<select id="getfavoritelist" resultType="favoritelist">
+		select storename, openhour, closehour, phonenum from favoritelist
+	</select>
+	
+	<!-- 단골점포 등록 -->
+	<insert id="addtofavorite" parameterType="restaurant">
+		insert into favoritelist (id, storename, openhour, closehour, phonenum, minorder, requiredtime, grade, reviewnum)
+		values(fvl_seq.nextval, #{storename}, #{openhour}, #{closehour}, #{phonenum}, #{minorder}, #{requiredtime}, #{grade}, #{reviewnum})
+	</insert>
+	
+	
+	
+	<!-- 주문     하기 -->
+	<insert id="addtoorderlist" parameterType="orderlist">
+		insert into orderlist (id, orderdate, storename, menuname, price, amount, mileage)
+		values(odl_seq.nextval, #{orderdate}, #{storename}, #{menuname}, #{price}, #{amount}, #{mileage})
+	</insert>
+	
+	<!-- 주문목록 출력 -->
+	<select id="getorderlist" resultType="orderlist">
+		select * from orderlist
+	</select>
+		
+	<!-- 주문 수정 -->
+	<update id="modifyOrder" parameterType="shoppingbag">
+		UPDATE shoppingbag
+		SET
+			menuname = #{menuname}
+			amount = #{amount}
+		WHERE
+			sbid = #{id}
+	</update>
+	
+	
+	
+	<!-- 음식점 검색(점포이름) -->
+	<select id="selectRestaurant" parameterType="String" resultType="restaurant">
+		select storename, openhour, closehour, phonenum
+		from restaurant where storename like '%' || #{value} || '%'
+	</select>
+
+	<!-- 음식점 검색(전화번호) -->
+	<select id="selectRestaurant2" parameterType="String" resultType="restaurant">
+		select storename, openhour, closehour, phonenum
+		from restaurant
+		where phoneNum like '%' || #{value} || '%'
+	</select>
+	
+
+	
+	
+	<!-- 리뷰 출력하기 -->
+	<select id="getReviewList" parameterType="String" resultType="review">
+		select * from review
+		where storename = #{storename}
+	</select>
+	
+	<!-- 리뷰 등록하기 -->
+	<insert id="writeReview" parameterType="review">
+		insert into review (id, nickname, storename, grade, text)
+		values (rv_seq.nextval, #{nickname}, #{storename}, #{grade}, #{text})
+	</insert> 
+	
+	
+	
+	<!-- 일찍오픈 순 -->
+	<select id="earlyopen" parameterType="int" resultType="restaurant">
+		select rv.storename, rst.openhour, rst.closehour, rst.phonenum, rst.minorder, rst.requiredtime, rv.grade, 2, rv.reviewnum
+		from restaurant rst, (select storename, avg(grade) as grade, count(id) as reviewnum from review group by storename) rv
+		where rst.storename(+) LIKE rv.storename
+			  and
+			  rst.foodtype = #{value}
+		order by openhour asc
+	</select>
+
+	<!-- 늦게마감 순 -->
+	<select id="lateclose" parameterType="int" resultType="restaurant">
+		select rv.storename, rst.openhour, rst.closehour, rst.phonenum, rst.minorder, rst.requiredtime, rv.grade, 2, rv.reviewnum
+		from restaurant rst, (select storename, avg(grade) as grade, count(id) as reviewnum from review group by storename) rv
+		where rst.storename(+) LIKE rv.storename
+			  and
+			  rst.foodtype = #{value}
+		order by closehour desc
+	</select>
+
+	<!-- 빠른배달 순 -->
+	<select id="earlydelivery" parameterType="int" resultType="restaurant">
+		select rv.storename, rst.openhour, rst.closehour, rst.phonenum, rst.minorder, rst.requiredtime, rv.grade, 2, rv.reviewnum
+		from restaurant rst, (select storename, avg(grade) as grade, count(id) as reviewnum from review group by storename) rv
+		where rst.storename(+) LIKE rv.storename
+			  and
+			  rst.foodtype = #{value}
+		order by requiredtime asc
+	</select>
+	
+	<!-- 평점높은 순 -->
+	<select id="highaverage" parameterType="int" resultType="restaurant">
+		select rv.storename, rst.openhour, rst.closehour, rst.phonenum, rst.minorder, rst.requiredtime, rv.grade, 2, rv.reviewnum
+		from restaurant rst, (select storename, avg(grade) as grade, count(id) as reviewnum from review group by storename) rv
+		where rst.storename(+) LIKE rv.storename
+			  and
+			  rst.foodtype = #{value}
+		order by grade desc
+	</select>
+	
+	<!-- 리뷰많은 순 -->
+	<select id="manyreview" parameterType="int" resultType="restaurant">
+		select rv.storename, rst.openhour, rst.closehour, rst.phonenum, rst.minorder, rst.requiredtime, rv.grade, rv.reviewnum
+		from restaurant rst, (select storename, avg(grade) as grade, count(id) as reviewnum from review group by storename) rv
+		where rst.storename(+) LIKE rv.storename
+			  and
+			  rst.foodtype = #{value}
+		order by reviewnum desc
+	</select>
+	
+	
+	
+	<!-- 로그인   확인 -->
+	<select id="check" parameterType="login" resultType="Login">
+		select * 
+		from administrator
+		where id like #{id} AND pw like #{pw} 
+	</select>
+			
+	<!-- 점포 등록 -->		
+	<insert id="add" parameterType="restaurant">
+		insert into	restaurant(rstid, foodtype, storename, openhour, closehour, phonenum, minorder, requiredtime)
+		values(rst_seq.nextval, #{foodtype}, #{storename}, #{openhour}, #{closehour}, #{phonenum}, #{minorder}, #{requiredtime})
+	</insert>
+
+	<!-- 메뉴 등록 -->
+	<insert id="add2" parameterType="menu">
+		insert into menu(id, storename, menuname, price)
+		values(mu_seq.nextval, #{storename}, #{menuname}, #{price})
+	</insert>		
+</mapper>
